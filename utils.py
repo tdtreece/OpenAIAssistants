@@ -2,7 +2,7 @@ import shelve
 import openai
 from dotenv import load_dotenv, find_dotenv
 import os
-import asyncio
+import time
 
 openai_client = openai
 _ = load_dotenv(find_dotenv())  # read local .env file
@@ -16,11 +16,13 @@ assistant = openai_client.beta.assistants.retrieve(assistant_id)
 # Thread Management
 # ---------------------------------
 def check_if_thread_exists(user_id):
+    user_id = str(user_id)
     with shelve.open("threads_db") as threads_shelf:
         return threads_shelf.get(user_id, None)
 
 
 def store_thread(user_id, thread_id):
+    user_id = str(user_id)
     with shelve.open("threads_db", writeback=True) as threads_shelf:
         threads_shelf[user_id] = thread_id
 
@@ -40,14 +42,13 @@ def run_assistant(thread):
 
     # Wait for completion
     while run.status != "completed":
-        await asyncio.sleep(2)
+        time.sleep(2)
         print(run.status)
         run = openai_client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
 
     # Retrieve the Messages
     messages = openai_client.beta.threads.messages.list(thread_id=thread.id)
     new_message = messages.data[0].content[0].text.value
-    print(f"Generated message: {new_message}")
     return new_message
 
 
@@ -67,7 +68,7 @@ def generate_response(message_body, user_id, name):
 
     # Otherwise, retrieve the existing thread
     else:
-        print(f"Retrieving existing thread for {name} with wa_id {user_id}.")
+        print(f"Retrieving existing thread for {name} with user_id {user_id}.")
         thread = openai_client.beta.threads.retrieve(thread_id)
 
     # Add message to thread
@@ -79,7 +80,4 @@ def generate_response(message_body, user_id, name):
 
     # Run the assistant and get the new message
     new_message = run_assistant(thread)
-    print(f"To {name}:", new_message)
     return new_message
-
-

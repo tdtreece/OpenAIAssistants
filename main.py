@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from discord import Interaction
 import asyncio
+from utils import *
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -25,40 +26,14 @@ async def on_ready():
     print(f'{client.user.name} is logged in.')
 
 
-@client.tree.command(name="ping_web", description="Shows current latency of bot responses.")
-async def ping(interaction: Interaction):
-    bot_latency = (client.latency*1000)
-    await interaction.response.send_message(f"Pong!...{int(bot_latency)}ms")
-
-
 @client.tree.command(name="w3dhelper", description="Let me know what you need help with!")
 async def helper(interaction: Interaction, user_input: str):
     user_id = interaction.user.id
+    user_name = interaction.user.name
     await interaction.response.defer()
 
-    thread = openai_client.beta.threads.create()
-    message = openai_client.beta.threads.messages.create(
-        thread_id=thread.id,
-        role='user',
-        content=user_input
-    )
+    response = generate_response(user_input, user_id, user_name)
 
-    run = openai_client.beta.threads.runs.create(
-        thread_id=thread.id,
-        assistant_id=assistant.id
-    )
-
-    while run.status != "completed":
-        await asyncio.sleep(2)
-        print(run.status)
-        run = openai_client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-
-    print("Run completed!")
-    messages = openai_client.beta.threads.messages.list(
-        thread_id=thread.id
-    )
-
-    assistant_response = messages.data[0].content[0].text.value
-    await interaction.followup.send(f"{assistant_response} \n {user_id}")
+    await interaction.followup.send(f"{response}")
 
 client.run(bot_token)
