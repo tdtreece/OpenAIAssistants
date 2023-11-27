@@ -80,3 +80,10 @@ def generate_response(message_body, user_id, name):
     # Run the assistant and get the new message
     new_message = run_assistant(thread)
     return new_message
+
+
+# ---------------------------------
+# Discord Message Length Handling
+# ---------------------------------
+def split_message(message, max_length=1500):
+    return [message[i:i+max_length] for i in range(0, len(message), max_length)]

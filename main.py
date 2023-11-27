@@ -28,12 +28,18 @@ async def on_ready():
 
 @client.tree.command(name="w3dhelper", description="Let me know what you need help with!")
 async def helper(interaction: Interaction, user_input: str):
+    user = interaction.user
     user_id = interaction.user.id
     user_name = interaction.user.name
     await interaction.response.defer()
 
     response = generate_response(user_input, user_id, user_name)
 
-    await interaction.followup.send(f"{response}")
+    if len(response) > 1500:
+        messages = split_message(response)
+        for i, msg in enumerate(messages):
+            await interaction.followup.send(f"Question: {user_input}\n\nAnswer Part {i+1}: {msg}")
+    else:
+        await interaction.followup.send(f"Question: {user_input}\n\nAnswer: {response}")
 
 client.run(bot_token)
