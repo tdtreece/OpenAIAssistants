@@ -43,7 +43,6 @@ def run_assistant(thread):
     # Wait for completion
     while run.status != "completed":
         time.sleep(2)
-        print(run.status)
         run = openai_client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
 
     # Retrieve the Messages
